@@ -1,0 +1,92 @@
+/*
+B. One Night At Freddy's
+
+You have m animatronics, each with danger level initially 0.
+
+The night lasts l seconds.
+Every second, exactly one animatronic's danger increases by 1.
+
+At n fixed times a[i], immediately after that second,
+you may choose one animatronic and reset its danger level to 0.
+
+At the end of the night, the overall danger is:
+
+    max(d1, d2, ..., dm)
+
+Find the minimum value x such that regardless of how the danger
+increments are distributed among the animatronics, you can always
+guarantee that the final overall danger is at most x.
+
+Input:
+- t test cases
+- For each test case:
+    n = number of flashlight uses
+    m = number of animatronics
+    l = length of the night
+    a[i] = times when flashlight can be used
+
+Output:
+- Minimum guaranteed final maximum danger.
+*/
+
+package org.likhith;
+import java.io.*;
+import java.util.*;
+
+public class Main {
+    public static void main(String[] args) throws Exception {
+
+        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+
+        int t = Integer.parseInt(br.readLine());
+
+        while(t-- > 0){
+
+            StringTokenizer st = new StringTokenizer(br.readLine());
+            int n = Integer.parseInt(st.nextToken());
+            int m = Integer.parseInt(st.nextToken());
+            int l = Integer.parseInt(st.nextToken());
+
+            int a[] = new int[n];
+            st = new StringTokenizer(br.readLine());
+
+            for(int i = 0; i<n; i++){
+                a[i] = Integer.parseInt(st.nextToken());
+            }
+
+            int[] lvls = new int[m];
+            int curr = n;
+
+            for(int sec = 0; sec < l; sec++){
+                lvls[Math.min(curr + 1, m) - 1]++;
+
+                Arrays.sort(lvls);
+
+                for(int i = 0, j = m - 1; i < j; i++, j--){
+
+                    int temp = lvls[i];
+                    lvls[i] = lvls[j];
+                    lvls[j] = temp;
+                }
+
+                if(curr > 0 && a[n - curr] - 1 == sec){
+
+                    lvls[0] = 0;
+
+                    Arrays.sort(lvls);
+
+                    for(int i = 0, j = m - 1; i < j; i++, j--){
+
+                        int temp = lvls[i];
+                        lvls[i] = lvls[j];
+                        lvls[j] = temp;
+                    }
+
+                    curr--;
+                }
+            }
+
+            System.out.println(lvls[0]);
+        }
+    }
+}
