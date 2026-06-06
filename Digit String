@@ -1,0 +1,61 @@
+package org.likhith;
+
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+
+public class P2230B {
+
+    /*
+B. Digit String
+
+Given a string consisting of digits 1 to 4.
+
+A string is called beautiful if it is impossible to choose some of its
+characters (keeping their order) to form a number divisible by 4.
+
+Find the minimum number of characters that must be removed to make
+the string beautiful.
+
+Observation:
+- '4' itself is divisible by 4, so it cannot be kept.
+- The only dangerous two-digit subsequences are:
+      12, 24, 32, 44
+- Therefore, in a beautiful subsequence:
+      all '2's must appear before any '1' or '3',
+      and no '4' can be included.
+- The longest beautiful subsequence has the form:
+      2*(1|3)*
+- Answer = n - (length of longest beautiful subsequence)
+
+DP:
+dp2  = longest subsequence containing only '2's.
+dp13 = longest subsequence of the form 2*(1|3)*.
+*/
+
+    public static void main(String args[]) throws Exception {
+
+        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+
+        int T = Integer.parseInt(br.readLine());
+
+        while (T-- > 0) {
+
+            String st = br.readLine();
+
+            int dp2 = 0, dp13 = 0;
+
+            for (char ch : st.toCharArray()) {
+
+                if (ch == '2') {
+                    dp2++;
+                }
+                else if (ch == '1' || ch == '3') {
+                    dp13 = Math.max(dp13 + 1, dp2 + 1);
+                }
+                // Ignore '4'
+            }
+
+            System.out.println(st.length() - Math.max(dp2, dp13));
+        }
+    }
+}
