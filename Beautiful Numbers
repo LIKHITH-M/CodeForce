@@ -1,0 +1,104 @@
+package org.likhith;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.*;
+
+public class P2203B {
+    public static void main(String[] args) throws IOException {
+
+        /*
+         * B. Beautiful Numbers
+         *
+         * F(x) = sum of digits of x.
+         * A number is beautiful if:
+         *
+         *      F(F(x)) = F(x)
+         *
+         * Since F(y) = y only for y = 1..9,
+         * a number is beautiful iff its digit sum is <= 9.
+         *
+         * In one move, we can replace any digit with another digit.
+         * The resulting number cannot have a leading zero.
+         *
+         * Goal:
+         * Find the minimum number of digit replacements required
+         * to make the digit sum <= 9.
+         *
+         * Greedy Observation:
+         *
+         * Let current digit sum = sum.
+         *
+         * To reduce the sum as much as possible with one operation:
+         *
+         * 1. For the first digit d:
+         *      We can change it to 1 (not 0 because of leading zero rule).
+         *      Reduction (saving) = d - 1.
+         *
+         * 2. For any other digit d:
+         *      We can change it to 0.
+         *      Reduction (saving) = d.
+         *
+         * Compute all possible savings,
+         * sort them in descending order,
+         * and apply the largest savings first until
+         * the digit sum becomes less than 10.
+         *
+         * Number of applied savings = answer.
+         */
+
+        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+        int T = Integer.parseInt(br.readLine().trim());
+
+        StringBuilder sb = new StringBuilder();
+
+        while (T-- > 0) {
+
+            char[] ch = br.readLine().trim().toCharArray();
+            int n = ch.length;
+
+            // Current digit sum
+            int sum = 0;
+            for (char c : ch) {
+                sum += (c - '0');
+            }
+
+            // Already beautiful
+            if (sum < 10) {
+                sb.append(0).append('\n');
+                continue;
+            }
+
+            // Maximum reduction obtainable from each digit
+            Integer[] savings = new Integer[n];
+
+            // First digit can be changed only to 1
+            savings[0] = (ch[0] - '0') - 1;
+
+            // Remaining digits can be changed to 0
+            for (int i = 1; i < n; i++) {
+                savings[i] = ch[i] - '0';
+            }
+
+            // Use largest reductions first
+            Arrays.sort(savings, Collections.reverseOrder());
+
+            int count = 0;
+
+            for (int s : savings) {
+
+                if (sum < 10) break;
+
+                if (s <= 0) break;
+
+                sum -= s;
+                count++;
+            }
+
+            sb.append(count).append('\n');
+        }
+
+        System.out.print(sb);
+    }
+}
