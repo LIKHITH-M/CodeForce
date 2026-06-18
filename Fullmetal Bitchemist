@@ -1,0 +1,127 @@
+import java.io.*;
+import java.util.*;
+
+public class Main {
+
+    /*
+     * C. Fullmetal Bitchemist
+     *
+     * Given a binary string s, count the number of non-empty substrings
+     * that can be reduced to a string of length exactly 1.
+     *
+     * Operation:
+     * - Choose two equal adjacent bits.
+     * - Remove both and replace them with one bit of the opposite value.
+     *
+     * Example:
+     *      10001 -> 1101 -> 001 -> 11 -> 0
+     *
+     * Core observations:
+     *
+     * 1. Map:
+     *      '0' -> +1
+     *      '1' -> -1 ≡ 2 (mod 3)
+     *
+     * 2. Let pref[i] be the prefix sum modulo 3.
+     *
+     * 3. A substring is beautiful iff its balance modulo 3 is non-zero.
+     *
+     * 4. Count occurrences of residues 0,1,2:
+     *
+     *      total =
+     *          cnt[0]*cnt[1]
+     *        + cnt[0]*cnt[2]
+     *        + cnt[1]*cnt[2]
+     *
+     * 5. Purely alternating substrings are exceptions because no operation
+     *    can be applied to them.
+     *
+     * 6. Find maximal alternating segments [l,r].
+     *
+     *    For every segment, count prefix residues inside [l,r+1]:
+     *
+     *          bad =
+     *              freq[0]*freq[1]
+     *            + freq[0]*freq[2]
+     *            + freq[1]*freq[2]
+     *
+     * 7. Single-character substrings are always beautiful.
+     *
+     * Final answer:
+     *
+     *      answer = total - bad + n
+     *
+     * Time Complexity: O(n)
+     */
+
+    public static void main(String[] args) throws Exception {
+
+        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+        int t = Integer.parseInt(br.readLine());
+
+        StringBuilder ans = new StringBuilder();
+
+        while (t-- > 0) {
+
+            int n = Integer.parseInt(br.readLine());
+            String s = br.readLine();
+
+            int[] pref = new int[n + 1];
+
+            // Count occurrences of prefix residues modulo 3
+            long[] cnt = new long[3];
+            cnt[0] = 1;
+
+            // Build prefix balances
+            for (int i = 0; i < n; i++) {
+
+                // '0' -> +1, '1' -> -1 ≡ 2 (mod 3)
+                int val = (s.charAt(i) == '0') ? 1 : 2;
+
+                pref[i + 1] = (pref[i] + val) % 3;
+
+                cnt[pref[i + 1]]++;
+            }
+
+            // Total substrings with balance mod 3 ≠ 0
+            long total =
+                    cnt[0] * cnt[1]
+                  + cnt[0] * cnt[2]
+                  + cnt[1] * cnt[2];
+
+            long bad = 0;
+
+            int l = 0;
+
+            // Process maximal alternating segments
+            while (l < n) {
+
+                int r = l;
+
+                while (r + 1 < n && s.charAt(r) != s.charAt(r + 1)) {
+                    r++;
+                }
+
+                long[] freq = new long[3];
+
+                // Prefixes belonging to this segment
+                for (int i = l; i <= r + 1; i++) {
+                    freq[pref[i]]++;
+                }
+
+                // Alternating substrings inside this segment are invalid
+                bad +=
+                        freq[0] * freq[1]
+                      + freq[0] * freq[2]
+                      + freq[1] * freq[2];
+
+                l = r + 1;
+            }
+
+            // Add single-character substrings
+            ans.append(total - bad + n).append('\n');
+        }
+
+        System.out.print(ans);
+    }
+}
