@@ -1,0 +1,195 @@
+package org.likhith;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.StringTokenizer;
+import java.util.HashMap;
+
+/*
+Problem (Codeforces 2227E)
+
+You are given an array.
+
+For every position i, imagine moving cubes from previous
+elements so that every element becomes equal to the minimum
+value on its suffix.
+
+Additionally, you are allowed to decrease exactly one
+suffix minimum by 1 before performing the process.
+
+Find the maximum total number of cubes that can be moved.
+*/
+
+public class P2227E {
+
+    public static void main(String args[]) throws IOException {
+
+        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+
+        int T = Integer.parseInt(br.readLine());
+
+        StringBuilder sb = new StringBuilder();
+
+        while (T-- > 0) {
+
+            int n = Integer.parseInt(br.readLine());
+
+            StringTokenizer st = new StringTokenizer(br.readLine());
+
+            int[] arr = new int[n];
+
+            for (int i = 0; i < n; i++)
+                arr[i] = Integer.parseInt(st.nextToken());
+
+            /*
+            ---------------------------------------------------
+            Step 1:
+            Compute suffix minimum.
+
+            R[i] = minimum element from i...n-1
+            ---------------------------------------------------
+            */
+
+            int[] R = new int[n];
+
+            R[n - 1] = arr[n - 1];
+
+            for (int i = n - 2; i >= 0; i--)
+                R[i] = Math.min(arr[i], R[i + 1]);
+
+            /*
+            ---------------------------------------------------
+            Step 2:
+            Initial cubes moved.
+
+            Every element eventually becomes R[i].
+
+            Cubes moved from index i
+
+                arr[i] - R[i]
+            ---------------------------------------------------
+            */
+
+            long initialMoved = 0;
+
+            /*
+            freqR[x]
+
+            Number of indices whose suffix minimum equals x.
+
+            This helps determine how many positions benefit
+            if suffix minimum x is decreased by 1.
+            */
+            HashMap<Integer, Integer> freqR = new HashMap<>();
+
+            for (int i = 0; i < n; i++) {
+
+                initialMoved += (arr[i] - R[i]);
+
+                freqR.put(R[i], freqR.getOrDefault(R[i], 0) + 1);
+            }
+
+            /*
+            ---------------------------------------------------
+            Step 3:
+            Try decreasing one suffix minimum.
+
+            Only STRICT suffix minimums can be decreased.
+
+            Example:
+
+            7 5 8 5 6
+
+            Suffix minimum:
+            5 5 5 5 6
+
+            Only the first occurrence introducing a new suffix
+            minimum can affect later elements.
+            ---------------------------------------------------
+            */
+
+            int maxGain = 0;
+
+            for (int i = 0; i < n; i++) {
+
+                /*
+                arr[i] is a strict suffix minimum if
+
+                arr[i] < suffix minimum after it.
+                */
+                if (i == n - 1 || arr[i] < R[i + 1]) {
+
+                    /*
+                    Decreasing this suffix minimum by 1 gives
+                    +1 cube for every position using it.
+
+                    The minimum element itself cannot contribute,
+                    so subtract 1.
+                    */
+
+                    int gain = freqR.get(arr[i]) - 1;
+
+                    maxGain = Math.max(maxGain, gain);
+                }
+            }
+
+            sb.append(initialMoved + maxGain).append("\n");
+        }
+
+        System.out.print(sb);
+    }
+}
+
+/*
+=========================================================
+Core Logic
+=========================================================
+
+1. Build suffix minimum array.
+
+       R[i] = minimum of arr[i...n-1]
+
+2. Without any operation,
+
+       cubes moved =
+       Σ(arr[i] - R[i])
+
+3. Count how many indices use each suffix minimum.
+
+       freqR[value]
+
+4. Only strict suffix minimums can be decreased.
+
+5. If suffix minimum x is decreased by 1,
+
+   every index whose suffix minimum is x
+   contributes one extra cube.
+
+   Extra gain
+
+       = freqR[x] - 1
+
+   (-1 because the minimum element itself
+   cannot donate another cube.)
+
+6. Take the maximum possible gain.
+
+Answer
+
+    initialMoved + maxGain
+
+=========================================================
+Complexity
+=========================================================
+
+Building suffix minimum : O(n)
+
+Frequency counting      : O(n)
+
+Finding best gain       : O(n)
+
+Overall Time  : O(n)
+
+Space         : O(n)
+*/
