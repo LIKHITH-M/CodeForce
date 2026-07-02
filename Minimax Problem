@@ -1,0 +1,168 @@
+package org.likhith;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.Arrays;
+import java.util.StringTokenizer;
+
+/*
+Problem (Codeforces 1288D - Minimax Problem)
+
+Given n people and m skills.
+a[i][j] = skill value of person i in skill j.
+
+Choose two people such that the minimum skill value
+(obtained by taking the better value of the two people
+for every skill) is maximized.
+
+Formally maximize:
+min(max(a[p][1],a[q][1]),
+    max(a[p][2],a[q][2]),
+    ...
+    max(a[p][m],a[q][m]))
+
+Output any valid pair of indices.
+
+Constraints:
+m <= 8
+=> Bitmask solution is possible.
+*/
+
+public class P1288D {
+
+    public static void main(String args[]) throws IOException {
+        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+
+        StringTokenizer st = new StringTokenizer(br.readLine());
+
+        n = Integer.parseInt(st.nextToken());
+        m = Integer.parseInt(st.nextToken());
+
+        arr = new int[n][m];
+
+        int left = Integer.MAX_VALUE;
+        int right = Integer.MIN_VALUE;
+
+        for (int i = 0; i < n; i++) {
+            st = new StringTokenizer(br.readLine());
+
+            for (int j = 0; j < m; j++) {
+                arr[i][j] = Integer.parseInt(st.nextToken());
+
+                left = Math.min(left, arr[i][j]);
+                right = Math.max(right, arr[i][j]);
+            }
+        }
+
+        // Binary search on the answer.
+        while (left <= right) {
+            int mid = left + (right - left) / 2;
+
+            if (check(mid))
+                left = mid + 1;
+            else
+                right = mid - 1;
+        }
+
+        // Recover one valid pair.
+        check(right);
+
+        System.out.println(ind1 + " " + ind2);
+    }
+
+    static int ind1 = 1, ind2 = 1;
+    static int n, m;
+    static int[][] arr;
+
+    /*
+    Core Logic
+
+    Suppose we want to check whether answer >= x.
+
+    1. Convert every row into a bitmask.
+       Bit j = 1 if skill[j] >= x.
+
+       Example (m = 4)
+
+       Skills = [8, 3, 7, 5]
+       x = 5
+
+       mask = 1101
+
+       because
+       8>=5 ✔
+       3>=5 ✘
+       7>=5 ✔
+       5>=5 ✔
+
+    2. Store one row index for every possible mask.
+
+       Since m <= 8,
+       total masks = 2^8 = 256 only.
+
+    3. Try every pair of masks.
+
+       If
+
+           mask1 | mask2 == (1<<m)-1
+
+       then together they cover every skill.
+
+       That means for every column,
+       at least one of the two rows has value >= x.
+
+    4. If such pair exists,
+       answer x is feasible.
+
+    Time:
+        Building masks : O(n*m)
+        Checking pairs : O((2^m)^2)
+
+    Since 2^8 = 256,
+    256^2 = 65536, which is tiny.
+    */
+
+    static private boolean check(int x) {
+
+        int size = 1 << m;
+
+        int[] mask = new int[size];
+        Arrays.fill(mask, -1);
+
+        // Build mask for every row.
+        for (int i = 0; i < n; i++) {
+
+            int currMask = 0;
+
+            for (int j = 0; j < m; j++) {
+                if (arr[i][j] >= x)
+                    currMask |= (1 << j);
+            }
+
+            mask[currMask] = i;
+        }
+
+        // Try every pair of masks.
+        for (int i = 0; i < size; i++) {
+
+            if (mask[i] == -1)
+                continue;
+
+            for (int j = i; j < size; j++) {
+
+                if (mask[j] == -1)
+                    continue;
+
+                // Together they satisfy every skill.
+                if ((i | j) == size - 1) {
+                    ind1 = mask[i] + 1;
+                    ind2 = mask[j] + 1;
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+}
