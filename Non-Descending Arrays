@@ -1,0 +1,227 @@
+package org.likhith;
+
+import java.io.*;
+import java.util.*;
+
+/*
+Problem (Codeforces 2144C)
+
+You are given two arrays A and B of length n.
+
+For every index i, you have two choices:
+1. Keep (A[i], B[i]) as it is.
+2. Swap them -> (B[i], A[i]).
+
+Count the number of ways to make these choices such that
+both resulting arrays are non-decreasing.
+
+Output the answer modulo 998244353.
+*/
+
+public class P2144C {
+
+    static final int MOD = 998244353;
+
+    static int n;
+    static int[] a, b;
+    static int[][] dp;
+
+    /*
+    dfs(i, prevState)
+
+    i         -> current index
+    prevState -> whether previous index was swapped
+
+        0 : previous pair was NOT swapped
+        1 : previous pair WAS swapped
+
+    Returns:
+        Number of valid ways from index i onwards.
+    */
+    static int dfs(int i, int prevState) {
+
+        // Successfully processed all indices.
+        if (i == n)
+            return 1;
+
+        if (dp[i][prevState] != -1)
+            return dp[i][prevState];
+
+        /*
+        Determine previous values after considering whether
+        previous position was swapped.
+        */
+        int prevA, prevB;
+
+        if (prevState == 0) {
+            prevA = a[i - 1];
+            prevB = b[i - 1];
+        } else {
+            prevA = b[i - 1];
+            prevB = a[i - 1];
+        }
+
+        long ans = 0;
+
+        // --------------------------------------------------
+        // Option 1 : Do NOT swap current index.
+        // --------------------------------------------------
+
+        int currA = a[i];
+        int currB = b[i];
+
+        // Both arrays must remain non-decreasing.
+        if (prevA <= currA && prevB <= currB) {
+            ans += dfs(i + 1, 0);
+        }
+
+        // --------------------------------------------------
+        // Option 2 : Swap current index.
+        // --------------------------------------------------
+
+        currA = b[i];
+        currB = a[i];
+
+        if (prevA <= currA && prevB <= currB) {
+            ans += dfs(i + 1, 1);
+        }
+
+        return dp[i][prevState] = (int) (ans % MOD);
+    }
+
+    public static void main(String[] args) throws Exception {
+
+        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+
+        int T = Integer.parseInt(br.readLine());
+
+        StringBuilder out = new StringBuilder();
+
+        while (T-- > 0) {
+
+            n = Integer.parseInt(br.readLine());
+
+            a = new int[n];
+            b = new int[n];
+
+            StringTokenizer st = new StringTokenizer(br.readLine());
+
+            for (int i = 0; i < n; i++)
+                a[i] = Integer.parseInt(st.nextToken());
+
+            st = new StringTokenizer(br.readLine());
+
+            for (int i = 0; i < n; i++)
+                b[i] = Integer.parseInt(st.nextToken());
+
+            /*
+            If there is only one position,
+            we have exactly two choices:
+            swap or don't swap.
+            */
+            if (n == 1) {
+                out.append(2).append('\n');
+                continue;
+            }
+
+            dp = new int[n][2];
+
+            for (int[] row : dp)
+                Arrays.fill(row, -1);
+
+            // First position is NOT swapped.
+            long ans = dfs(1, 0);
+
+            // Recompute assuming first position IS swapped.
+            for (int[] row : dp)
+                Arrays.fill(row, -1);
+
+            ans += dfs(1, 1);
+
+            out.append(ans % MOD).append('\n');
+        }
+
+        System.out.print(out);
+    }
+}
+
+/*
+=========================================================
+Core Logic
+=========================================================
+
+At every index we have exactly TWO choices:
+
+1) Keep the pair
+   (A[i], B[i])
+
+2) Swap the pair
+   (B[i], A[i])
+
+The only thing that matters for the next index is:
+
+    "Was the previous pair swapped?"
+
+because that determines the previous values that current
+values must be compared against.
+
+---------------------------------------------------------
+State
+---------------------------------------------------------
+
+dp[i][state]
+
+i      -> current index
+
+state:
+    0 = previous index NOT swapped
+    1 = previous index swapped
+
+Value:
+    Number of valid ways from index i onwards.
+
+---------------------------------------------------------
+Transition
+---------------------------------------------------------
+
+From every state we try both possibilities:
+
+Keep current pair
+
+or
+
+Swap current pair
+
+Only continue if BOTH arrays stay non-decreasing.
+
+Keep:
+    prevA <= A[i]
+    prevB <= B[i]
+
+Swap:
+    prevA <= B[i]
+    prevB <= A[i]
+
+---------------------------------------------------------
+Why only 2 states?
+---------------------------------------------------------
+
+We never need the entire history.
+
+The only information affecting the current decision is
+the values at index i-1 after swapping/not swapping.
+
+Hence only 2 DP states per index.
+
+---------------------------------------------------------
+Complexity
+---------------------------------------------------------
+
+States = n × 2
+
+Each state tries only 2 transitions.
+
+Time  : O(n)
+
+Space : O(n)
+*/
