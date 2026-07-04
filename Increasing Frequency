@@ -1,0 +1,121 @@
+package org.likhith;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.StringTokenizer;
+
+public class P1082E {
+
+    /*
+     * Problem Summary:
+     * ----------------
+     * We are allowed to choose ONE subarray [l...r] and add the SAME integer k
+     * to every element in that subarray.
+     *
+     * Goal:
+     * Maximize the number of occurrences of value 'c' after the operation.
+     *
+     * ------------------------------------------------------------
+     * Key Observation:
+     *
+     * Suppose we want to convert some value 'x' into 'c'.
+     *
+     * Required:
+     *      k = c - x
+     *
+     * After choosing this k,
+     *  - Every x inside the chosen segment becomes c.      (+1 gain)
+     *  - Every existing c inside the segment becomes c+k,
+     *    so they are no longer equal to c.                 (-1 loss)
+     *
+     * Therefore, for every value x (!= c), we need the segment that
+     * maximizes:
+     *
+     *      (# of x) - (# of c)
+     *
+     * Final answer =
+     *
+     *      total number of c in whole array
+     *      +
+     *      maximum gain over all values x.
+     *
+     * ------------------------------------------------------------
+     * DP / Kadane Idea:
+     *
+     * totalC = number of c seen so far.
+     *
+     * best[x] =
+     * Maximum value of
+     *
+     *      (#x - #c)
+     *
+     * for a segment ending at current position.
+     *
+     * Transition:
+     *
+     * If current value is x:
+     *
+     *      Extend previous segment:
+     *          best[x] + 1
+     *
+     * OR
+     *
+     *      Start a new segment here:
+     *          totalC + 1
+     *
+     * We store:
+     *
+     *      best[x] = max(best[x] + 1, totalC + 1)
+     *
+     * Actual gain:
+     *
+     *      best[x] - totalC
+     *
+     * because totalC is added while starting a new segment.
+     *
+     * Complexity:
+     * O(n)
+     * Space:
+     * O(maxValue)
+     */
+
+    public static void main(String args[]) throws IOException {
+
+        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+        StringTokenizer st = new StringTokenizer(br.readLine());
+
+        int n = Integer.parseInt(st.nextToken());
+        int c = Integer.parseInt(st.nextToken());
+
+        st = new StringTokenizer(br.readLine());
+
+        // best[x] = best (#x - #c) value for segments ending at current position
+        int[] best = new int[500001];
+
+        // Total number of c encountered so far
+        int totalC = 0;
+
+        // Maximum gain achievable
+        int segGain = 0;
+
+        for (int i = 0; i < n; i++) {
+
+            int x = Integer.parseInt(st.nextToken());
+
+            if (x == c) {
+                // Existing c contributes to future losses
+                totalC++;
+            } else {
+
+                // Either extend previous segment or start a new one
+                best[x] = Math.max(best[x] + 1, totalC + 1);
+
+                // Convert stored value back to actual gain
+                segGain = Math.max(segGain, best[x] - totalC);
+            }
+        }
+
+        System.out.println(totalC + segGain);
+    }
+}
