@@ -170,86 +170,65 @@ If you give me the **constraints**, I can tell you the intended algorithm (DP / 
 
 
 
+import java.util.Arrays;
 
-import java.util.*;
+public class HouseRobberLineDP {
 
-class Solution {
-    static List<Integer>[] graph;
-    static int[][][] dp;
-    static int[] money;
-    static int K;
+    public static int robLine(int[] money, int k) {
+        int n = money.length;
+        if (n == 0) return 0;
+        k = Math.min(k, n); // Cap k at n since at most (n-1) edges exist
 
-    static void dfs(int u, int parent) {
+        // dp[i][j][0] -> house i NOT robbed
+        // dp[i][j][1] -> house i IS robbed
+        int[][][] dp = new int[n][k + 1][2];
 
-        // dp[u][0][k] = u not robbed
-        // dp[u][1][k] = u robbed
-
-        dp[u] = new int[2][K + 1];
-
-        for (int k = 0; k <= K; k++) {
-            dp[u][0][k] = 0;
-            dp[u][1][k] = money[u];
+        // Initialize with -1 to indicate unreachable states
+        for (int[][] layer : dp) {
+            for (int[] row : layer) {
+                Arrays.fill(row, -1);
+            }
         }
 
-        for (int v : graph[u]) {
-            if (v == parent) continue;
+        // Base case: House 0
+        dp[0][0][0] = 0;
+        dp[0][0][1] = money[0];
 
-            dfs(v, u);
+        for (int i = 1; i < n; i++) {
+            for (int j = 0; j <= k; j++) {
+                // If we do NOT rob house i, previous house state does not cause an edge conflict
+                int prevMax = Math.max(dp[i - 1][j][0], dp[i - 1][j][1]);
+                if (prevMax != -1) {
+                    dp[i][j][0] = prevMax;
+                }
 
-            int[][] next = new int[2][K + 1];
+                // If we DO rob house i:
+                // Case A: Previous house was NOT robbed (uses 0 additional jammers)
+                if (dp[i - 1][j][0] != -1) {
+                    dp[i][j][1] = Math.max(dp[i][j][1], dp[i - 1][j][0] + money[i]);
+                }
 
-            for (int k = 0; k <= K; k++) {
-
-                for (int x = 0; x <= k; x++) {
-
-                    // u not robbed
-                    int childBest = Math.max(
-                        dp[v][0][x],
-                        dp[v][1][x]
-                    );
-
-                    next[0][k] = Math.max(
-                        next[0][k],
-                        dp[u][0][k - x] + childBest
-                    );
-
-                    // u robbed, v not robbed
-                    next[1][k] = Math.max(
-                        next[1][k],
-                        dp[u][1][k - x] + dp[v][0][x]
-                    );
-
-                    // u and v both robbed -> use 1 jammer
-                    if (x > 0) {
-                        next[1][k] = Math.max(
-                            next[1][k],
-                            dp[u][1][k - x] +
-                            dp[v][1][x - 1]
-                        );
-                    }
+                // Case B: Previous house WAS robbed (requires 1 jammer on edge i-1 -> i)
+                if (j > 0 && dp[i - 1][j - 1][1] != -1) {
+                    dp[i][j][1] = Math.max(dp[i][j][1], dp[i - 1][j - 1][1] + money[i]);
                 }
             }
-
-            dp[u] = next;
         }
+
+        // Find the maximum value in the final step
+        int result = 0;
+        for (int j = 0; j <= k; j++) {
+            result = Math.max(result, Math.max(dp[n - 1][j][0], dp[n - 1][j][1]));
+        }
+
+        return result;
     }
 
-    public static int solve(int n, int k, int[] values, int[][] edges) {
-        K = k;
-        money = values;
-
-        graph = new ArrayList[n];
-
-        for (int i = 0; i < n; i++)
-            graph[i] = new ArrayList<>();
-
-        for (int[] e : edges) {
-            graph[e[0]].add(e[1]);
-            graph[e[1]].add(e[0]);
-        }
-
-        dfs(0, -1);
-
-        return Math.max(dp[0][0][K], dp[0][1][K]);
+    public static void main(String[] args) {
+        int[] money = {5, 10, 20, 5};
+        System.out.println("Line DP K=0: " + robLine(money, 0)); // 25
+        System.out.println("Line DP K=1: " + robLine(money, 1)); // 30
     }
 }
+
+
