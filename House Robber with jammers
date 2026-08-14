@@ -1,0 +1,255 @@
+## Problem meaning
+
+You have:
+
+* `N` houses
+* `money[i]` = money in house `i`
+* `M` connections/edges between houses
+* Normally, if two houses are **directly connected**, you **cannot rob both**.
+* You have `K` **jammers**.
+* Each jammer can disable the restriction on **one connection**.
+* Find the **maximum money** you can steal.
+
+### Example
+
+```text
+N = 4
+money = [5, 10, 20, 5]
+
+Edges:
+0 -- 1
+1 -- 2
+2 -- 3
+
+K = 0
+```
+
+Graph:
+
+```text
+5 ---- 10 ---- 20 ---- 5
+0       1       2       3
+```
+
+Since `K = 0`, all edges have their normal restriction.
+
+You cannot choose:
+
+```text
+0 and 1
+1 and 2
+2 and 3
+```
+
+But you can choose:
+
+```text
+0 and 2
+```
+
+because houses `0` and `2` are **not directly connected**.
+
+Money:
+
+```text
+house 0 = 5
+house 2 = 20
+
+total = 25
+```
+
+So answer:
+
+```text
+25
+```
+
+---
+
+## What does a jammer do?
+
+Suppose:
+
+```text
+K = 1
+```
+
+You can disable **one edge**.
+
+For example, disable:
+
+```text
+1 -- 2
+```
+
+Now houses `1` and `2` are allowed to be robbed together.
+
+You could choose:
+
+```text
+1 and 2
+```
+
+giving:
+
+```text
+10 + 20 = 30
+```
+
+So the jammer effectively says:
+
+> "Ignore the restriction associated with this particular connection."
+
+---
+
+## Important distinction
+
+The jammer does **not** disable a house.
+
+It disables an **edge/connection**.
+
+For example:
+
+```text
+0 -- 1
+```
+
+Normally:
+
+```text
+rob 0 + rob 1 ❌
+```
+
+With a jammer on `(0,1)`:
+
+```text
+rob 0 + rob 1 ✅
+```
+
+---
+
+## What are we actually optimizing?
+
+You have **two decisions**:
+
+1. Which houses should I rob?
+2. Which `K` edges should I disable so that this selection becomes valid?
+
+And you want:
+
+```text
+maximum sum of money
+```
+
+---
+
+### One thing to be careful about
+
+This problem is **much harder than normal House Robber** once arbitrary graph edges and `K` jammers are involved.
+
+Normal House Robber:
+
+```text
+0 -- 1 -- 2 -- 3
+```
+
+can be solved with simple DP.
+
+But with:
+
+```text
+N houses
+M arbitrary edges
+K edges that can be disabled
+```
+
+the solution depends heavily on the **constraints for N, M, and K**.
+
+If you give me the **constraints**, I can tell you the intended algorithm (DP / tree DP / graph algorithm / etc.).
+
+
+
+
+
+import java.util.*;
+
+class Solution {
+    static List<Integer>[] graph;
+    static int[][][] dp;
+    static int[] money;
+    static int K;
+
+    static void dfs(int u, int parent) {
+
+        // dp[u][0][k] = u not robbed
+        // dp[u][1][k] = u robbed
+
+        dp[u] = new int[2][K + 1];
+
+        for (int k = 0; k <= K; k++) {
+            dp[u][0][k] = 0;
+            dp[u][1][k] = money[u];
+        }
+
+        for (int v : graph[u]) {
+            if (v == parent) continue;
+
+            dfs(v, u);
+
+            int[][] next = new int[2][K + 1];
+
+            for (int k = 0; k <= K; k++) {
+
+                for (int x = 0; x <= k; x++) {
+
+                    // u not robbed
+                    int childBest = Math.max(
+                        dp[v][0][x],
+                        dp[v][1][x]
+                    );
+
+                    next[0][k] = Math.max(
+                        next[0][k],
+                        dp[u][0][k - x] + childBest
+                    );
+
+                    // u robbed, v not robbed
+                    next[1][k] = Math.max(
+                        next[1][k],
+                        dp[u][1][k - x] + dp[v][0][x]
+                    );
+
+                    // u and v both robbed -> use 1 jammer
+                    if (x > 0) {
+                        next[1][k] = Math.max(
+                            next[1][k],
+                            dp[u][1][k - x] +
+                            dp[v][1][x - 1]
+                        );
+                    }
+                }
+            }
+
+            dp[u] = next;
+        }
+    }
+
+    public static int solve(int n, int k, int[] values, int[][] edges) {
+        K = k;
+        money = values;
+
+        graph = new ArrayList[n];
+
+        for (int i = 0; i < n; i++)
+            graph[i] = new ArrayList<>();
+
+        for (int[] e : edges) {
+            graph[e[0]].add(e[1]);
+            graph[e[1]].add(e[0]);
+        }
+
+        dfs(0, -1);
+
+        return Math.max(dp[0][0][K], dp[0][1][K]);
+    }
+}
