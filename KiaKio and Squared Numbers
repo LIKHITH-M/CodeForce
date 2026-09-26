@@ -1,0 +1,65 @@
+package org.likhith;
+
+import java.io.*;
+import java.util.*;
+
+public class Main {
+
+    static int next(int x) {
+        int sum = 0;
+
+        while (x > 0) {
+            int d = x % 10;
+            sum += d * d;
+            x /= 10;
+        }
+
+        return sum;
+    }
+
+    static int getSignature(int x) {
+        int steps = 0;
+
+        while (x != 1 && x != 4) {
+            x = next(x);
+            steps++;
+        }
+
+        if (x == 1)
+            return 0;
+
+        return 1 + steps % 8;
+    }
+
+    public static void main(String[] args) throws Exception {
+
+        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+
+        int t = Integer.parseInt(br.readLine());
+
+        while (t-- > 0) {
+
+            int n = Integer.parseInt(br.readLine());
+
+            StringTokenizer st = new StringTokenizer(br.readLine());
+
+            Map<Integer, Integer> freq = new HashMap<>();
+
+            for (int i = 0; i < n; i++) {
+                int x = Integer.parseInt(st.nextToken());
+
+                int signature = getSignature(x);
+
+                freq.put(signature, freq.getOrDefault(signature, 0) + 1);
+            }
+
+            long ans = 0;
+
+            for (int count : freq.values()) {
+                ans += (long) count * (count - 1) / 2;
+            }
+
+            System.out.println(ans);
+        }
+    }
+}
