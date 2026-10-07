@@ -1,0 +1,185 @@
+/*
+Problem: Domination
+
+You are given a tree with N vertices.
+
+A subset S of vertices is called a dominating set if, for every
+vertex u in the tree:
+
+    - u itself belongs to S, OR
+    - at least one neighbor of u belongs to S.
+
+Find the number of dominating sets containing exactly N - 3 vertices.
+
+Constraints:
+1 <= T <= 3 * 10^4
+4 <= N <= 2 * 10^5
+Sum of N over all test cases <= 2 * 10^5
+*/
+
+
+import java.util.*;
+
+class Codechef {
+
+    public static void main(String[] args) {
+
+        Scanner sc = new Scanner(System.in);
+
+        int T = sc.nextInt();
+
+        while (T-- > 0) {
+
+            int N = sc.nextInt();
+
+            // Adjacency list of the tree
+            List<Integer>[] g = new ArrayList[N + 1];
+
+            for (int i = 1; i <= N; i++)
+                g[i] = new ArrayList<>();
+
+            // Degree of every vertex
+            int[] deg = new int[N + 1];
+
+            // Read the N - 1 edges
+            for (int i = 0; i < N - 1; i++) {
+
+                int u = sc.nextInt();
+                int v = sc.nextInt();
+
+                g[u].add(v);
+                g[v].add(u);
+
+                deg[u]++;
+                deg[v]++;
+            }
+
+            /*
+             * We need a dominating set of size N - 3.
+             *
+             * Therefore, instead of selecting N - 3 vertices,
+             * think about the 3 vertices that are NOT selected.
+             *
+             * Total ways to choose these 3 vertices:
+             *
+             *              C(N, 3)
+             */
+
+            /*
+             * Count the number of leaves.
+             *
+             * A leaf has degree 1.
+             */
+            long leaves = 0;
+
+            for (int i = 1; i <= N; i++) {
+                if (deg[i] == 1)
+                    leaves++;
+            }
+
+            /*
+             * BAD CASE 1:
+             *
+             * Suppose v is a leaf and u is its only neighbor.
+             *
+             * If both v and u are excluded, then v has no
+             * selected neighbor and therefore is NOT dominated.
+             *
+             * For every leaf:
+             *
+             *   leaf + its neighbor + any third vertex
+             *
+             * gives a bad triple.
+             *
+             * Number = leaves * (N - 2)
+             */
+            long bad = leaves * (N - 2L);
+
+
+            /*
+             * The above counting can count the same triple multiple
+             * times.
+             *
+             * Example:
+             *
+             *       v
+             *      / \
+             *     a   b
+             *
+             * If a and b are both leaves, then:
+             *
+             *     {a, b, v}
+             *
+             * is counted once for a and once for b.
+             *
+             * So we remove these duplicate counts.
+             */
+            for (int v = 1; v <= N; v++) {
+
+                int leafNeighbors = 0;
+
+                for (int u : g[v]) {
+                    if (deg[u] == 1)
+                        leafNeighbors++;
+                }
+
+                /*
+                 * Choose any 2 leaf neighbors of v.
+                 *
+                 * C(leafNeighbors, 2)
+                 */
+                bad -= (long) leafNeighbors
+                        * (leafNeighbors - 1) / 2;
+            }
+
+
+            /*
+             * BAD CASE 2:
+             *
+             * Consider:
+             *
+             *       a
+             *       |
+             *       v
+             *       |
+             *       b
+             *
+             * If v has degree 2 and both its neighbors are
+             * non-leaves, then excluding:
+             *
+             *       {a, v, b}
+             *
+             * leaves v with no selected neighbor.
+             *
+             * Therefore this is another bad triple.
+             *
+             * If a or b is a leaf, this case was already counted
+             * in BAD CASE 1, so we only add it when both neighbors
+             * have degree > 1.
+             */
+            for (int v = 1; v <= N; v++) {
+
+                if (deg[v] == 2) {
+
+                    int a = g[v].get(0);
+                    int b = g[v].get(1);
+
+                    if (deg[a] > 1 && deg[b] > 1)
+                        bad++;
+                }
+            }
+
+
+            /*
+             * Total ways to choose exactly 3 excluded vertices:
+             *
+             *             C(N, 3)
+             *
+             * Answer = total triples - bad triples
+             */
+            long total = (long) N * (N - 1) * (N - 2) / 6;
+
+            System.out.println(total - bad);
+        }
+    }
+}
