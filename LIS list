@@ -1,0 +1,69 @@
+
+import java.util.*;
+
+class Solution {
+
+    /*
+     * Problem: Find the Longest Increasing Subsequence (LIS).
+     *
+     * Given an integer array, return one longest strictly increasing
+     * subsequence while preserving the original element order.
+     *
+     * If multiple LIS sequences exist, return any one of them.
+     *
+     * Example:
+     * Input:  [3, 4, 2, 1, 10, 6]
+     * Output: [3, 4, 6]
+     *
+     * Time Complexity:  O(n log n)
+     * Space Complexity: O(n)
+     */
+
+    public static List<Integer> getLIS(List<Integer> arr) {
+        int n = arr.size();
+
+        int[] tails = new int[n];
+        int[] prev = new int[n];
+        Arrays.fill(prev, -1);
+
+        int size = 0;
+
+        for (int i = 0; i < n; i++) {
+            int low = 0, high = size;
+
+            // Find the first tail whose value >= arr[i].
+            while (low < high) {
+                int mid = low + (high - low) / 2;
+
+                if (arr.get(tails[mid]) < arr.get(i))
+                    low = mid + 1;
+                else
+                    high = mid;
+            }
+
+            int pos = low;
+
+            // Link the current element to its predecessor.
+            if (pos > 0)
+                prev[i] = tails[pos - 1];
+
+            // Update the smallest tail for this subsequence length.
+            tails[pos] = i;
+
+            if (pos == size)
+                size++;
+        }
+
+        // Reconstruct the actual LIS by following predecessor links.
+        List<Integer> lis = new ArrayList<>();
+        int index = tails[size - 1];
+
+        while (index != -1) {
+            lis.add(arr.get(index));
+            index = prev[index];
+        }
+
+        Collections.reverse(lis);
+        return lis;
+    }
+}
