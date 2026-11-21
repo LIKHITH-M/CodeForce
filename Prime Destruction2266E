@@ -1,0 +1,75 @@
+
+// E. Prime Destruction
+
+
+
+package org.likhith;
+
+import java.util.*;
+
+public class RegistrationSystem {
+
+    static final int MAXN = 200005;
+    static final long INF = (long) 1e18;
+    static int[] spf = new int[MAXN];
+    static long[] cost = new long[MAXN];
+
+    static void precompute(){
+        int[] primes = new int[MAXN];
+        int primeCount = 0;
+        cost[1] = 0;
+
+        for(int i = 2; i < MAXN; i++){
+
+            if(spf[i] == 0){
+                spf[i] = i;
+                primes[primeCount++] = i;
+            }
+
+            for(int j = 0; j < primeCount; j++){
+                int p = primes[j];
+                if(p > spf[i] || (long) i * p >= MAXN) break;
+
+                spf[i * p] = p;
+            }
+            int p = spf[i];
+            cost[i] = 1L + (long) p * cost[i/p];
+        }
+    }
+
+    public static void main(String[] args) {
+        Scanner sc = new Scanner(System.in);
+        int t = sc.nextInt();
+        precompute();
+
+        while (t-- > 0) {
+
+            int n = sc.nextInt();
+            int k = sc.nextInt();
+
+            int[] arr = new int[n];
+            for(int i = 0; i < n; i++) arr[i] = sc.nextInt();
+
+            long[] minOps = new long[n+1];
+            Arrays.fill(minOps, INF);
+            for(int x = 1; x <= k; x++) minOps[x] = 0;
+
+            for(int q = 1; q <= k; q++){
+                for(int x = 2 * q; x <= n; x += q){
+                    int d = x / q;
+                    if(cost[d] < minOps[x]){
+                        minOps[x] = cost[d];
+                    }
+                }
+            }
+
+            long totalOps = 0;
+            for(int x : arr){
+                totalOps += minOps[x];
+            }
+
+            System.out.println(totalOps);
+        }
+    }
+}
+
