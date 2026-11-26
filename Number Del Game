@@ -1,0 +1,63 @@
+    //             InterVal DP  -- CF 1431G       Number Deletion Game
+
+import java.io.BufferedReader
+import java.io.InputStreamReader
+import java.util.StringTokenizer
+
+fun main() {
+    val br = BufferedReader(InputStreamReader(System.`in`))
+    var st: StringTokenizer? = null
+
+    fun nextToken(): String {
+        while (st == null || !st!!.hasMoreTokens()) {
+            val line = br.readLine() ?: return ""
+            st = StringTokenizer(line)
+        }
+        return st!!.nextToken()
+    }
+
+    val n = nextToken().toInt()
+    val k = nextToken().toInt()
+
+    val a = LongArray(n) { nextToken().toLong() }
+    a.sort()
+
+    val gameDp = Array(n) { LongArray(n) }
+
+    for (len in 2..n step 2) {
+        for (l in 0..n - len) {
+            val r = l + len - 1
+            var best = 0L
+
+            for (i in l until r step 2) {
+                val leftVal = if (i > l) gameDp[l][i - 1] else 0L
+                val midVal = if (i + 1 <= r - 1) gameDp[i + 1][r - 1] else 0L
+                best = maxOf(best, a[r] - a[i] + leftVal + midVal)
+            }
+            gameDp[l][r] = best
+        }
+    }
+
+    val negInf = Long.MIN_VALUE / 4
+    val dp = Array(n + 1) { LongArray(k + 1) { negInf } }
+    dp[0][0] = 0L
+
+    for (i in 0 until n) {
+        for (t in 0..k) {
+            if (dp[i][t] == negInf) continue
+
+            // Skip a[i]
+            dp[i + 1][t] = maxOf(dp[i + 1][t], dp[i][t])
+
+            // Take an even-length subarray a[i..j]
+            var len = 2
+            while (i + len - 1 < n && t + len / 2 <= k) {
+                val j = i + len - 1
+                dp[j + 1][t + len / 2] = maxOf(dp[j + 1][t + len / 2], dp[i][t] + gameDp[i][j])
+                len += 2
+            }
+        }
+    }
+
+    println(dp[n][k])
+}
