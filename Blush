@@ -1,0 +1,192 @@
+/*
+ * E. Blush
+ *
+ * Problem:
+ * Sunny starts at step a, and Aubrey starts at step 0.
+ *
+ * In every round:
+ * 1. Sunny climbs x steps.
+ * 2. Sunny can optionally give Aubrey a compliment.
+ * 3. If complimented, Aubrey climbs 1 step and her next speed becomes 2.
+ * 4. Otherwise, Aubrey climbs v steps and her speed doubles.
+ *
+ * Initially, Aubrey's speed is 1.
+ * Sunny can give at most k compliments.
+ *
+ * The game ends when Aubrey reaches or passes Sunny.
+ * Find the maximum step Sunny can reach while strictly ahead of Aubrey.
+ *
+ * Constraints:
+ * 1 <= t <= 10^4
+ * 1 <= a <= 10^9
+ * 1 <= x <= 10^4
+ * 0 <= k <= 10^8
+ *
+ * Approach: Binary Search + Greedy + Geometric Progression
+ *
+ * Without compliments, Aubrey's movements are:
+ * 1, 2, 4, 8, 16, ...
+ *
+ * Each compliment resets her movement to 1,
+ * creating a new block.
+ *
+ * Therefore, k compliments can create at most k + 1 blocks.
+ *
+ * To minimize Aubrey's total distance, distribute the rounds
+ * as equally as possible among these blocks.
+ *
+ * Example: R = 8, k = 1
+ *
+ * Block lengths (2, 6): 3 + 63 = 66
+ * Block lengths (3, 5): 7 + 31 = 38
+ * Block lengths (4, 4): 15 + 15 = 30 (Optimal)
+ *
+ * Why equal distribution?
+ *
+ * Moving one round from a larger block to a smaller block
+ * removes a bigger power of 2 and adds a smaller power of 2.
+ *
+ * Example: Block lengths (3, 5)
+ *
+ * Before: (1 + 2 + 4) + (1 + 2 + 4 + 8 + 16) = 38
+ * After:  (1 + 2 + 4 + 8) + (1 + 2 + 4 + 8) = 30
+ *
+ * Therefore, optimal block lengths differ by at most 1.
+ *
+ * Geometric progression:
+ * Distance covered in a block of length L = 2^L - 1.
+ *
+ * Time Complexity: O(log(30 * (k + 1))) per test case
+ * Space Complexity: O(1) auxiliary space
+ */
+
+import java.io.*;
+import java.util.*;
+
+public class Main {
+
+    static boolean canSurvive(long R, long a, long x, long k) {
+
+        // Sunny is initially ahead of Aubrey.
+        if (R == 0) return true;
+
+        // Sunny's position after R rounds.
+        long sunny = a + R * x;
+
+        // Maximum number of non-empty blocks.
+        // Each compliment creates one additional block.
+        long m = Math.min(R, k + 1);
+
+        // Distribute R rounds as equally as possible.
+        long q = R / m;
+        long rem = R % m;
+
+        /*
+         * Example: R = 11, k = 2
+         *
+         * m = 3
+         * q = 11 / 3 = 3
+         * rem = 11 % 3 = 2
+         *
+         * Block lengths: [3, 4, 4]
+         *
+         * Small blocks have q rounds.
+         * Large blocks have q + 1 rounds.
+         */
+
+        long smallCount = m - rem;
+        long largeCount = rem;
+
+        // Example: smallCount = 1, largeCount = 2.
+
+        // Distance covered in each small block.
+        // 2^q - 1 = 2^3 - 1 = 7.
+        long smallBlock = (1L << q) - 1;
+
+        // Distance covered in each large block.
+        // 2^(q+1) - 1 = 2^4 - 1 = 15.
+        long largeBlock = (1L << (q + 1)) - 1;
+
+        // Minimum possible total distance covered by Aubrey.
+        // Example: 1 * 7 + 2 * 15 = 37.
+        long aubrey = smallCount * smallBlock
+                    + largeCount * largeBlock;
+
+        /*
+         * Arrange smaller blocks before larger blocks.
+         * Under this arrangement, Aubrey's cumulative average
+         * movement never exceeds her final average movement.
+         *
+         * Therefore, if Sunny is strictly ahead after R rounds,
+         * he is also strictly ahead in all previous rounds.
+         */
+
+        return aubrey < sunny;
+    }
+
+    public static void main(String[] args) throws IOException {
+
+        BufferedReader br = new BufferedReader(
+                new InputStreamReader(System.in));
+
+        int t = Integer.parseInt(br.readLine());
+        StringBuilder out = new StringBuilder();
+
+        while (t-- > 0) {
+
+            StringTokenizer st = new StringTokenizer(br.readLine());
+
+            long a = Long.parseLong(st.nextToken());
+            long x = Long.parseLong(st.nextToken());
+            long k = Long.parseLong(st.nextToken());
+
+            /*
+             * Binary search on the number of rounds.
+             *
+             * The problem guarantees that the game ends
+             * no later than round 30 * (k + 1).
+             *
+             * Because of this upper bound, q <= 30.
+             * Hence, all distance calculations fit within long,
+             * and additional overflow checks are unnecessary.
+             */
+
+            long low = 0;
+            long high = 30L * (k + 1);
+            long ans = 0;
+
+            /*
+             * Monotonic property:
+             *
+             * Rounds:    0  1  2  3  4  5  6  7  8  9
+             * Possible:  T  T  T  T  T  T  T  F  F  F
+             *
+             * Find the last possible round.
+             */
+
+            while (low <= high) {
+
+                long mid = low + (high - low) / 2;
+
+                if (canSurvive(mid, a, x, k)) {
+
+                    // Sunny survives mid rounds.
+                    // Try to survive more rounds.
+                    ans = mid;
+                    low = mid + 1;
+
+                } else {
+
+                    // Sunny cannot survive mid rounds.
+                    // Search for fewer rounds.
+                    high = mid - 1;
+                }
+            }
+
+            // Convert maximum survivable rounds into final position.
+            out.append(a + ans * x).append('\n');
+        }
+
+        System.out.print(out);
+    }
+}
